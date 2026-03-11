@@ -137,7 +137,7 @@
         { pt: "BANANA", en: "BANANA", img: "banana.png", tipo: "in" },
         { pt: "ALFACE", en: "LETTUCE", img: "alface.png", tipo: "in" },
         { pt: "TOMATE", en: "TOMATO", img: "tomate.png", tipo: "in" },
-        { pt: "CARNE", en: "MEAT", img: "imagens/carne.png", tipo: "in" },
+        { pt: "CARNE", en: "MEAT", img: "/carne.png", tipo: "in" },
         { pt: "OVO", en: "EGG", img: "imagens/ovo.png", tipo: "in" },
         {
           pt: "REPOLHO",
@@ -427,7 +427,7 @@
             d.draggable = true;
             d.dataset.tipo = a.tipo;
             d.dataset.id = "item-" + itemIdCounter++;
-            d.innerHTML = `<img src="${modoPensar ? "imagens/pensando.png" : a.img}"><div class="nome">${lang === "pt" ? a.pt : a.en}</div>`;
+            d.innerHTML = `<img src="${modoPensar ? "/pensando.png" : a.img}"><div class="nome">${lang === "pt" ? a.pt : a.en}</div>`;
 
             d.ondragstart = (e) => {
               e.dataTransfer.setData("tipo", a.tipo);
@@ -590,7 +590,7 @@
           );
           if (alimentoOriginal) {
             img.src = modoPensar
-              ? "imagens/pensando.png"
+              ? "/pensando.png"
               : alimentoOriginal.img;
           }
         });
@@ -617,7 +617,7 @@
         const preview = document.getElementById("itemMobilePreview");
         const pergunta = document.getElementById("perguntaMobile");
 
-        const imgSrc = modoPensar ? "imagens/pensando.png" : alimento.img;
+        const imgSrc = modoPensar ? "/pensando.png" : alimento.img;
         preview.innerHTML = `<img src="${imgSrc}" style="width:100px;height:100px"><div style="font-weight:bold;margin-top:10px">${lang === "pt" ? alimento.pt : alimento.en}</div>`;
         pergunta.textContent =
           lang === "pt"
