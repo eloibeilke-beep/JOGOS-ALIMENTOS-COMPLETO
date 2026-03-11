@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Super Jogo dos Alimentos</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <div class="header-section">
+      <h1 data-pt="SUPER JOGO DOS ALIMENTOS" data-en="SUPER FOOD GAME"></h1>
+
+      <div class="idioma-pensar-group">
+        <button class="idioma" onclick="setLanguage('pt')">PT</button>
+        <button class="idioma" onclick="setLanguage('en')">EN</button>
+        <button class="pensar" id="pensar"></button>
+      </div>
+
+      <div id="info"></div>
+
+      <button class="reiniciar" id="reiniciar"></button>
+      <button class="nivel" id="nivel"></button>
+      <button class="prox" id="proxima"></button>
+    </div>
+
+    <div id="produtos"></div>
+
+    <div class="painel">
+      <div class="campo" data-tipo="in">
+        <h3
+          data-pt="IN NATURA/MINIMAMENTE PROCESSADOS"
+          data-en="FRESH/MINIMALLY PROCESSED"
+        ></h3>
+        <div class="campo-conteudo"></div>
+      </div>
+      <div class="campo" data-tipo="pro">
+        <h3 data-pt="PROCESSADOS" data-en="PROCESSED"></h3>
+        <div class="campo-conteudo"></div>
+      </div>
+      <div class="campo" data-tipo="ultra">
+        <h3 data-pt="ULTRAPROCESSADOS" data-en="ULTRA"></h3>
+        <div class="campo-conteudo"></div>
+      </div>
+    </div>
+
+    <footer>
+      <p>🌾 Desenvolvido por <strong>Prof. Elói Beilke</strong> 🥦</p>
+      <p class="licenca">© 2026 | Uso educacional</p>
+    </footer>
+
+    <div id="modalErro" style="display: none">
+      <div id="modalConteudo">
+        <div style="font-size: 50px">❌</div>
+        <h2>ERRO!</h2>
+        <p>Você perdeu 5 pontos.<br />Tente novamente!</p>
+        <button onclick="fecharModal()">OK</button>
+      </div>
+    </div>
+
+    <div id="modalVitoria" style="display: none">
+      <div id="modalConteudoVitoria">
+        <div id="confetes"></div>
+        <div style="font-size: 60px">🎉</div>
+        <h2 id="tituloVitoria"></h2>
+        <p id="mensagemVitoria"></p>
+        <p id="estatisticas"></p>
+        <button onclick="fecharVitoria()">Jogar Novamente</button>
+      </div>
+    </div>
+
+    <div id="modalMobile" style="display: none">
+      <div id="modalConteudoMobile">
+        <div id="itemMobilePreview"></div>
+        <h3 id="perguntaMobile"></h3>
+        <button
+          class="btn-mobile btn-in"
+          onclick="classificarMobile('in')"
+        ></button>
+        <button
+          class="btn-mobile btn-pro"
+          onclick="classificarMobile('pro')"
+        ></button>
+        <button
+          class="btn-mobile btn-ultra"
+          onclick="classificarMobile('ultra')"
+        ></button>
+      </div>
+    </div>
+
+    <script>
+      let fase = 1,
+        pontos = 0,
+        erros = 0,
+        acertos = 0,
+        modo = "facil",
+        tempo = 0,
+        intervalo,
+        lang = "pt",
+        modoPensar = false;
+      let itemSelecionado = null;
+      let fasesCompletadas = 0;
+      let itemIdCounter = 0;
+      let isMobile = window.innerWidth <= 768;
+
+      const textos = {
+        pt: {
+          fase: "Fase",
+          pontos: "Pontos",
+          erros: "Erros",
+          tempo: "Tempo",
+          reiniciar: "Reiniciar",
+          nivel: "Modo",
+          prox: "Próxima fase",
+          pensar: "Modo pensar",
+          facil: "Fácil",
+          medio: "Médio",
+          dificil: "Difícil",
+        },
+        en: {
+          fase: "Stage",
+          pontos: "Score",
+          erros: "Errors",
+          tempo: "Time",
+          reiniciar: "Restart",
+          nivel: "Mode",
+          prox: "Next stage",
+          pensar: "Thinking mode",
+          facil: "Easy",
+          medio: "Medium",
+          dificil: "Hard",
+        },
+      };
+
+      const alimentos = [
+        { pt: "MAÇÃ", en: "APPLE", img: "imagens/maca.png", tipo: "in" },
+        { pt: "BANANA", en: "BANANA", img: "imagens/banana.png", tipo: "in" },
+        { pt: "ALFACE", en: "LETTUCE", img: "imagens/alface.png", tipo: "in" },
+        { pt: "TOMATE", en: "TOMATO", img: "imagens/tomate.png", tipo: "in" },
+        { pt: "CARNE", en: "MEAT", img: "imagens/carne.png", tipo: "in" },
+        { pt: "OVO", en: "EGG", img: "imagens/ovo.png", tipo: "in" },
+        {
+          pt: "REPOLHO",
+          en: "CABBAGE",
+          img: "imagens/repolho.png",
+          tipo: "in",
+        },
+        {
+          pt: "BRÓCOLIS",
+          en: "BROCCOLI",
+          img: "imagens/brocolis.png",
+          tipo: "in",
+        },
+        { pt: "LARANJA", en: "ORANGE", img: "imagens/laranja.png", tipo: "in" },
+        { pt: "LIMÃO", en: "LEMON", img: "imagens/limao.png", tipo: "in" },
+        {
+          pt: "BATATA",
+          en: "POTATO",
+          img: "imagens/batatinha.png",
+          tipo: "in",
+        },
+        {
+          pt: "AMENDOIM",
+          en: "PEANUT",
+          img: "imagens/amendoim.png",
+          tipo: "in",
+        },
+        {
+          pt: "BATATA-DOCE",
+          en: "SWEET POTATO",
+          img: "imagens/batata-doce.png",
+          tipo: "in",
+        },
+        {
+          pt: "BETERRABA",
+          en: "BEETROOT",
+          img: "imagens/beterraba.png",
+          tipo: "in",
+        },
+        { pt: "CHUCHU", en: "CHAYOTE", img: "imagens/chuchu.png", tipo: "in" },
+        {
+          pt: "MANDIOCA",
+          en: "CASSAVA",
+          img: "imagens/mandioca.png",
+          tipo: "in",
+        },
+        { pt: "MILHO", en: "CORN", img: "imagens/milho.png", tipo: "in" },
+        { pt: "ÁGUA", en: "WATER", img: "imagens/agua.png", tipo: "in" },
+        { pt: "ÁGUA", en: "WATER", img: "imagens/agua1.png", tipo: "in" },
+        { pt: "MAMÃO", en: "PAPAYA", img: "imagens/mamao.png", tipo: "in" },
+        { pt: "MANGA", en: "MANGO", img: "imagens/manga.png", tipo: "in" },
+        {
+          pt: "MELANCIA",
+          en: "WATERMELON",
+          img: "imagens/melancia.png",
+          tipo: "in",
+        },
+        {
+          pt: "MORANGO",
+          en: "STRAWBERRY",
+          img: "imagens/morango.png",
+          tipo: "in",
+        },
+        {
+          pt: "PITAYA",
+          en: "DRAGON FRUIT",
+          img: "imagens/pitaya.png",
+          tipo: "in",
+        },
+        { pt: "UVA", en: "GRAPE", img: "imagens/uva.png", tipo: "in" },
+        { pt: "QUEIJO", en: "CHEESE", img: "imagens/queijo.png", tipo: "pro" },
+        { pt: "PÃO", en: "BREAD", img: "imagens/pao.png", tipo: "pro" },
+        { pt: "LEITE", en: "MILK", img: "imagens/leite.png", tipo: "pro" },
+        {
+          pt: "AZEITONA",
+          en: "OLIVE",
+          img: "imagens/azeitona.png",
+          tipo: "pro",
+        },
+        {
+          pt: "AZEITONA",
+          en: "OLIVE",
+          img: "imagens/azeitona1.png",
+          tipo: "pro",
+        },
+        {
+          pt: "CONSERVA DE PÊSSEGO",
+          en: "CANNED PEACH",
+          img: "imagens/conservadepessego.png",
+          tipo: "pro",
+        },
+        {
+          pt: "CONSERVA DE PEPINO",
+          en: "PICKLED CUCUMBER",
+          img: "imagens/conservadepepino.png",
+          tipo: "pro",
+        },
+        {
+          pt: "CONSERVAS",
+          en: "CANNED FOOD",
+          img: "imagens/conservas.png",
+          tipo: "pro",
+        },
+        { pt: "GELEIA", en: "JAM", img: "imagens/geleia.png", tipo: "pro" },
+        {
+          pt: "REFRIGERANTE",
+          en: "SODA",
+          img: "imagens/refrigerante.png",
+          tipo: "ultra",
+        },
+        {
+          pt: "REFRIGERANTE",
+          en: "SODA",
+          img: "imagens/refrigerante1.png",
+          tipo: "ultra",
+        },
+        {
+          pt: "REFRIGERANTE",
+          en: "SODA",
+          img: "imagens/refrigerante2.png",
+          tipo: "ultra",
+        },
+        {
+          pt: "REFRIGERANTE",
+          en: "SODA",
+          img: "imagens/refrigerante3.png",
+          tipo: "ultra",
+        },
+        {
+          pt: "BISCOITO",
+          en: "COOKIE",
+          img: "imagens/biscoito.png",
+          tipo: "ultra",
+        },
+        {
+          pt: "SORVETE",
+          en: "ICE CREAM",
+          img: "imagens/sorvete.png",
+          tipo: "ultra",
+        },
+        {
+          pt: "CHOCOLATE",
+          en: "CHOCOLATE",
+          img: "imagens/chocolate1.png",
+          tipo: "ultra",
+        },
+        {
+          pt: "MORTADELA",
+          en: "MORTADELLA",
+          img: "imagens/mortadela.png",
+          tipo: "ultra",
+        },
+        {
+          pt: "PRESUNTO",
+          en: "HAM",
+          img: "imagens/presunto.png",
+          tipo: "ultra",
+        },
+        {
+          pt: "SALGADINHO",
+          en: "SNACK",
+          img: "imagens/salgadinho1.png",
+          tipo: "ultra",
+        },
+        {
+          pt: "SALGADINHO",
+          en: "SNACK",
+          img: "imagens/salgadinho3.png",
+          tipo: "ultra",
+        },
+        { pt: "SUCO", en: "JUICE", img: "imagens/suco.png", tipo: "ultra" },
+        { pt: "SUCO", en: "JUICE", img: "imagens/suco0.png", tipo: "ultra" },
+        
+        {
+          pt: "SALSICHA",
+          en: "SAUSAGE",
+          img: "imagens/salsicha.png",
+          tipo: "ultra",
+        },
+      ];
+
+      function setLanguage(l) {
+        lang = l;
+        document
+          .querySelectorAll("[data-pt]")
+          .forEach(
+            (el) =>
+              (el.textContent = l === "pt" ? el.dataset.pt : el.dataset.en),
+          );
+        const t = textos[lang];
+        reiniciar.textContent = t.reiniciar;
+        nivel.textContent = t.nivel + ": " + t[modo];
+        proxima.textContent = t.prox;
+        pensar.textContent = t.pensar;
+        atualizar();
+        carregarFase();
+      }
+
+      function atualizar() {
+        const t = textos[lang];
+        info.innerHTML = `${t.fase}: ${fase} | ${t.pontos}: ${pontos} | ${t.erros}: ${erros} | ${t.tempo}: ${tempo}`;
+      }
+
+      function embaralhar(a) {
+        return a.sort(() => Math.random() - 0.5);
+      }
+
+      function mostrarErro() {
+        document.getElementById("modalErro").style.display = "flex";
+      }
+
+      function fecharModal() {
+        document.getElementById("modalErro").style.display = "none";
+      }
+
+      function mostrarVitoria() {
+        let mensagem, titulo;
+        if (erros === 0) {
+          titulo = "🏆 PERFEITO! 🏆";
+          mensagem = "Você é um EXPERT em alimentos saudáveis! Parabéns!";
+        } else if (erros <= 3) {
+          titulo = "🌟 EXCELENTE! 🌟";
+          mensagem =
+            "Você conhece muito bem os tipos de alimentos! Continue assim!";
+        } else if (erros <= 6) {
+          titulo = "👍 MUITO BOM! 👍";
+          mensagem = "Você está no caminho certo! Continue praticando!";
+        } else {
+          titulo = "💪 CONTINUE TENTANDO! 💪";
+          mensagem =
+            "Pratique mais algumas vezes para entender melhor os alimentos. Você consegue!";
+        }
+        document.getElementById("tituloVitoria").innerText = titulo;
+        document.getElementById("mensagemVitoria").innerText = mensagem;
+        const totalItens = acertos + erros;
+        document.getElementById("estatisticas").innerHTML =
+          `<strong>Pontuação Final:</strong> ${pontos} pontos<br><strong>Total de itens:</strong> ${totalItens}<br><strong>Acertos:</strong> ${acertos}<br><strong>Erros:</strong> ${erros}`;
+        if (erros <= 6) criarConfetes();
+        document.getElementById("modalVitoria").style.display = "flex";
+      }
+
+      function criarConfetes() {
+        const container = document.getElementById("confetes");
+        container.innerHTML = "";
+        for (let i = 0; i < 50; i++) {
+          const confete = document.createElement("div");
+          confete.className = "confete";
+          confete.style.left = Math.random() * 100 + "%";
+          confete.style.animationDelay = Math.random() * 3 + "s";
+          confete.style.backgroundColor = [
+            "#f39c12",
+            "#e74c3c",
+            "#3498db",
+            "#2ecc71",
+            "#9b59b6",
+          ][Math.floor(Math.random() * 5)];
+          container.appendChild(confete);
+        }
+      }
+
+      function fecharVitoria() {
+        document.getElementById("modalVitoria").style.display = "none";
+        fase = 1;
+        pontos = 0;
+        erros = 0;
+        acertos = 0;
+        fasesCompletadas = 0;
+        carregarFase();
+        atualizar();
+      }
+
+      function carregarFase() {
+        produtos.innerHTML = "";
+        document.querySelectorAll(".campo").forEach((c) => {
+          const titulo = c.querySelector("h3").outerHTML;
+          const conteudo = '<div class="campo-conteudo"></div>';
+          c.innerHTML = titulo + conteudo;
+        });
+
+        let qtd = modo === "facil" ? 6 : modo === "medio" ? 9 : 15;
+
+        embaralhar([...alimentos])
+          .slice(0, qtd)
+          .forEach((a) => {
+            let d = document.createElement("div");
+            d.className = "item";
+            d.draggable = true;
+            d.dataset.tipo = a.tipo;
+            d.dataset.id = "item-" + itemIdCounter++;
+            d.innerHTML = `<img src="${modoPensar ? "imagens/pensando.png" : a.img}"><div class="nome">${lang === "pt" ? a.pt : a.en}</div>`;
+
+            d.ondragstart = (e) => {
+              e.dataTransfer.setData("tipo", a.tipo);
+              e.dataTransfer.setData("id", d.dataset.id);
+            };
+
+            d.onclick = (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (isMobile) {
+                mostrarModalMobile(d, a);
+              } else {
+                if (itemSelecionado) {
+                  itemSelecionado.style.opacity = "1";
+                  itemSelecionado.style.transform = "scale(1)";
+                  itemSelecionado.style.border = "none";
+                }
+                itemSelecionado = d;
+                d.style.opacity = "0.9";
+                d.style.transform = "scale(1.05)";
+                d.style.border = "3px solid #3498db";
+                document.querySelectorAll(".campo").forEach((c) => {
+                  c.style.boxShadow = "0 0 20px rgba(52, 152, 219, 0.6)";
+                  c.style.borderWidth = "4px";
+                });
+              }
+            };
+
+            produtos.appendChild(d);
+          });
+
+        proxima.style.display = "none";
+        if (modo === "facil" || modo === "medio" || modo === "dificil")
+          iniciarTempo();
+        atualizar();
+      }
+
+      document.querySelectorAll(".campo").forEach((c) => {
+        c.ondragover = (e) => e.preventDefault();
+        c.ondrop = (e) => {
+          e.preventDefault();
+          let tipo = e.dataTransfer.getData("tipo");
+          let itemId = e.dataTransfer.getData("id");
+          let item = document.querySelector(`[data-id="${itemId}"]`);
+          let conteudo = c.querySelector(".campo-conteudo");
+          if (tipo === c.dataset.tipo) {
+            pontos += 10;
+            acertos++;
+            conteudo.appendChild(item);
+          } else {
+            erros++;
+            pontos -= 5;
+            mostrarErro();
+          }
+          atualizar();
+          verificarFim();
+        };
+
+        c.onclick = (e) => {
+          if (!itemSelecionado) return;
+          e.preventDefault();
+          e.stopPropagation();
+          let tipoCorreto = itemSelecionado.dataset.tipo;
+          let tipoCampo = c.dataset.tipo;
+          let conteudo = c.querySelector(".campo-conteudo");
+          if (tipoCorreto === tipoCampo) {
+            pontos += 10;
+            acertos++;
+            conteudo.appendChild(itemSelecionado);
+          } else {
+            pontos -= 5;
+            erros++;
+            mostrarErro();
+          }
+          document.querySelectorAll(".campo").forEach((campo) => {
+            campo.style.boxShadow = "";
+            campo.style.borderWidth = "3px";
+          });
+          itemSelecionado.style.opacity = "1";
+          itemSelecionado.style.transform = "scale(1)";
+          itemSelecionado.style.border = "none";
+          itemSelecionado = null;
+          atualizar();
+          verificarFim();
+        };
+      });
+
+      function verificarFim() {
+        if (produtos.children.length === 0) {
+          proxima.style.display = "inline-block";
+          clearInterval(intervalo);
+          fasesCompletadas++;
+          if (fasesCompletadas === 5 && modo === "facil") {
+            setTimeout(() => {
+              alert(
+                "🎉 PARABÉNS! Você completou 5 fases!\n\nAgora vamos para o MODO MÉDIO!",
+              );
+              modo = "medio";
+              const t = textos[lang];
+              nivel.textContent = t.nivel + ": " + t.medio;
+              fasesCompletadas = 0;
+            }, 500);
+          } else if (fasesCompletadas === 5 && modo === "medio") {
+            setTimeout(() => {
+              alert(
+                "🔥 INCRÍVEL! Você completou mais 5 fases!\n\nAgora vamos para o MODO DIFÍCIL!",
+              );
+              modo = "dificil";
+              const t = textos[lang];
+              nivel.textContent = t.nivel + ": " + t.dificil;
+              fasesCompletadas = 0;
+            }, 500);
+          } else if (fasesCompletadas === 5 && modo === "dificil") {
+            setTimeout(() => {
+              mostrarVitoria();
+            }, 500);
+          }
+        }
+      }
+
+      reiniciar.onclick = () => {
+        fase = 1;
+        pontos = 0;
+        erros = 0;
+        acertos = 0;
+        fasesCompletadas = 0;
+        modo = "facil";
+        const t = textos[lang];
+        nivel.textContent = t.nivel + ": " + t.facil;
+        clearInterval(intervalo);
+        tempo = 0;
+        carregarFase();
+      };
+
+      nivel.onclick = () => {
+        modo =
+          modo === "facil" ? "medio" : modo === "medio" ? "dificil" : "facil";
+        fase = 1;
+        pontos = 0;
+        erros = 0;
+        acertos = 0;
+        fasesCompletadas = 0;
+        setLanguage(lang);
+      };
+
+      proxima.onclick = () => {
+        fase++;
+        carregarFase();
+      };
+
+      pensar.onclick = () => {
+        modoPensar = !modoPensar;
+        document.querySelectorAll(".item img").forEach((img) => {
+          const item = img.closest(".item");
+          const itemId = item.dataset.id;
+          const alimentoOriginal = alimentos.find(
+            (a) =>
+              item.querySelector(".nome").textContent ===
+              (lang === "pt" ? a.pt : a.en),
+          );
+          if (alimentoOriginal) {
+            img.src = modoPensar
+              ? "imagens/pensando.png"
+              : alimentoOriginal.img;
+          }
+        });
+      };
+
+      function iniciarTempo() {
+        tempo = modo === "facil" ? 60 : modo === "medio" ? 70 : 90;
+        clearInterval(intervalo);
+        intervalo = setInterval(() => {
+          tempo--;
+          if (tempo <= 0) {
+            clearInterval(intervalo);
+            tempo = 0;
+            atualizar();
+            return;
+          }
+          atualizar();
+        }, 1000);
+      }
+
+      function mostrarModalMobile(item, alimento) {
+        itemSelecionado = item;
+        const modal = document.getElementById("modalMobile");
+        const preview = document.getElementById("itemMobilePreview");
+        const pergunta = document.getElementById("perguntaMobile");
+
+        const imgSrc = modoPensar ? "imagens/pensando.png" : alimento.img;
+        preview.innerHTML = `<img src="${imgSrc}" style="width:100px;height:100px"><div style="font-weight:bold;margin-top:10px">${lang === "pt" ? alimento.pt : alimento.en}</div>`;
+        pergunta.textContent =
+          lang === "pt"
+            ? "Onde este alimento se encaixa?"
+            : "Where does this food fit?";
+
+        document.querySelector(".btn-in").textContent =
+          lang === "pt" ? "🍎 IN NATURA" : "🍎 FRESH";
+        document.querySelector(".btn-pro").textContent =
+          lang === "pt" ? "🧀 PROCESSADOS" : "🧀 PROCESSED";
+        document.querySelector(".btn-ultra").textContent =
+          lang === "pt" ? "🍔 ULTRA" : "🍔 ULTRA";
+
+        modal.style.display = "flex";
+      }
+
+      function classificarMobile(tipoEscolhido) {
+        const modal = document.getElementById("modalMobile");
+        const tipoCorreto = itemSelecionado.dataset.tipo;
+        const campo = document.querySelector(
+          `.campo[data-tipo="${tipoEscolhido}"]`,
+        );
+        const conteudo = campo.querySelector(".campo-conteudo");
+
+        if (tipoCorreto === tipoEscolhido) {
+          pontos += 10;
+          acertos++;
+          conteudo.appendChild(itemSelecionado);
+          modal.style.display = "none";
+          itemSelecionado = null;
+          atualizar();
+          verificarFim();
+        } else {
+          pontos -= 5;
+          erros++;
+          modal.style.display = "none";
+          mostrarErro();
+          itemSelecionado = null;
+          atualizar();
+        }
+      }
+
+      window.addEventListener("resize", () => {
+        isMobile = window.innerWidth <= 768;
+      });
+
+      setLanguage("pt");
+      carregarFase();
+    </script>
+  </body>
+</html>
